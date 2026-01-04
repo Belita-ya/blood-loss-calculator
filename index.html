@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出血量计算工具</title>
+    <style>
+        :root {
+            --primary-color: #e53935;
+            --secondary-color: #1e88e5;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 15px;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #c62828);
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .warning-box {
+            background-color: #fff3e0;
+            border-left: 5px solid #ff9800;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            font-size: 0.9rem;
+        }
+        
+        .warning-box strong {
+            color: #e65100;
+        }
+        
+        .method-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+        
+        .method-btn {
+            background-color: white;
+            border: 2px solid #ddd;
+            padding: 12px 18px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            flex: 1;
+            min-width: 140px;
+            max-width: 180px;
+        }
+        
+        .method-btn:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .method-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+        
+        .calculation-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 25px;
+            display: none;
+        }
+        
+        .calculation-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-title {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 1.4rem;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .input-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+        
+        .input-unit {
+            position: relative;
+        }
+        
+        .unit {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #c62828;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #0d47a1;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .result-box {
+            background-color: #e8f5e9;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            border-left: 5px solid #4caf50;
+            display: none;
+        }
+        
+        .result-box.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result-title {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .result-details {
+            color: #555;
+            font-size: 0.95rem;
+        }
+        
+        .formula-box {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #555;
+        }
+        
+        .weight-input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .weight-input-container .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .weight-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .weight-controls button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .weight-summary {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 15px;
+            border: 1px solid #bbdefb;
+        }
+        
+        .weight-summary h4 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        .weight-summary p {
+            margin-bottom: 5px;
+        }
+        
+        .dry-material-selector {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+        }
+        
+        .material-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .material-item:last-child {
+            border-bottom: none;
+        }
+        
+        .material-name {
+            font-weight: 600;
+        }
+        
+        .material-weight {
+            color: #777;
+        }
+        
+        .material-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .material-quantity {
+            width: 70px;
+            text-align: center;
+            padding: 8px;
+        }
+        
+        .material-total {
+            font-weight: 600;
+            color: var(--secondary-color);
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        .accumulator-display {
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .accumulator-value {
+            color: var(--primary-color);
+        }
+        
+        .history-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: var(--border-radius);
+            border: 1px solid #eee;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .volume-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .volume-option {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .volume-option label {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 2px solid #bbdefb;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .volume-option input[type="radio"] {
+            display: none;
+        }
+        
+        .volume-option input[type="radio"]:checked + label {
+            background-color: #e3f2fd;
+            border-color: var(--secondary-color);
+        }
+        
+        .volume-option-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .volume-option-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .quantity-input-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .quantity-input {
+            width: 70px;
+            text-align: center;
+            padding: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            color: #777;
+            font-size: 0.9rem;
+            padding: 20px 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .method-btn {
+                min-width: 120px;
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .calculation-section {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .input-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .weight-input-container {
+                flex-direction: column;
+            }
+            
+            .volume-option {
+                min-width: 100%;
+            }
+            
+            .material-controls {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .quantity-input-container {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .method-btn {
+                min-width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>出血量计算工具</h1>
+            <p class="subtitle">临床出血量评估与计算方法</p>
+        </header>
+        
+        <div class="warning-box">
+            <strong>重要提示：</strong>本工具计算结果仅供医学专业人士参考，不能替代临床判断。任何疑似大出血的患者都必须立即寻求专业医疗救治。
+        </div>
+        
+        <div class="method-selector">
+            <div class="method-btn active" data-method="shock">休克指数法</div>
+            <div class="method-btn" data-method="gauze">纱布估算法</div>
+            <div class="method-btn" data-method="area">面积法</div>
+            <div class="method-btn" data-method="weight">称重法</div>
+            <div class="method-btn" data-method="volume">容积法</div>
+            <div class="method-btn" data-method="hb">血红蛋白法</div>
+        </div>
+        
+        <!-- 休克指数法 -->
+        <div id="shock-method" class="calculation-section active">
+            <h2 class="section-title">休克指数法</h2>
+            <p>通过心率和收缩压计算休克指数，评估失血量。</p>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="shock-gender">性别</label>
+                    <select id="shock-gender">
+                        <option value="female" selected>女性</option>
+                        <option value="male">男性</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="shock-weight">体重 (kg)</label>
+                    <div class="input-unit">
+                        <input type="number" id="shock-weight" placeholder="例如：60" min="30" max="200" step="0.1">
+                        <span class="unit">kg</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="heart-rate">心率 (次/分钟)</label>
+                <input type="number" id="heart-rate" placeholder="例如：120" min="40" max="200">
+            </div>
+            
+            <div class="input-group">
+                <label for="systolic-bp">收缩压 (mmHg)</label>
+                <input type="number" id="systolic-bp" placeholder="例如：90" min="30" max="250">
+            </div>
+            
+            <button class="btn" id="calculate-shock">计算出血量</button>
+            
+            <div class="formula-box">
+                <strong>计算公式：</strong><br>
+                全身血容量：男性=体重(kg)×70ml/kg，女性=体重(kg)×65ml/kg<br>
+                休克指数(SI) = 心率(HR) / 收缩压(SBP)<br>
+                失血量估算：SI≤0.5(正常)，SI≈1.0(失血20-30%)，SI>1.0(失血30-50%)，SI>1.5(失血>50%)
+            </div>
+            
+            <div id="shock-result" class="result-box">
+                <div class="result-title">计算结果</div>
+                <div class="result-value" id="shock-value">0 ml</div>
+                <div class="result-details" id="shock-details"></div>
+            </div>
+        </div>
+        
+        <!-- 纱布估算法 -->
+        <div id="gauze-method" class="calculation-section">
+            <h2 class="section-title">纱布估算法</h2>
+            <p>通过纱布/敷料数量估算出血量。</p>
+            
+            <div class="input-group">
+                <label for="large-gauze">大纱布数量 (10×10cm, 完全浸湿≈15ml/块)</label>
+                <input type="number" id="large-gauze" placeholder="例如：5" min="0" max="100">
+            </div>
+            
+            <div class="input-group">
+                <label for="large-pad">大棉垫数量 (完全浸湿≈40ml/块)</label>
+                <input type="number" id="large-pad" placeholder="例如：3" min="0" max="100">
+            </div>
+            
+            <div class="input-group">
+                <label for="small-gauze">小纱布数量 (5×5cm, 完全浸湿≈5ml/块)</label>
+                <input type="number" id="small-gauze" placeholder="例如：10" min="0" max="200">
+            </div>
+            
+            <button class="btn" id="calculate-gauze">计算出血量</button>
+            
+            <div class="formula-box">
+                <strong>估算标准：</strong><br>
+                大纱布(10×10cm, 8层)：完全浸湿 ≈ 15ml<br>
+                大棉垫：完全浸湿 ≈ 40ml<br>
+                小纱布(5×5cm)：完全浸湿 ≈ 5ml
+            </div>
+            
+            <div id="gauze-result" class="result-box">
+                <div class="result-title">计算结果</div>
+                <div class="result-value" id="gauze-value">0 ml</div>
+                <div class="result-details" id="gauze-details"></div>
+            </div>
+        </div>
+        
+        <!-- 面积法 -->
+        <div id="area-method" class="calculation-section">
+            <h2 class="section-title">面积法</h2>
+            <p>通过浸血面积估算出血量。</p>
+            
+            <div class="input-group">
+                <label for="blood-length">浸血区域长度 (cm)</label>
+                <input type="number" id="blood-length" placeholder="例如：15" min="1" max="200">
+            </div>
+            
+            <div class="input-group">
+                <label for="blood-width">浸血区域宽度 (cm)</label>
+                <input type="number" id="blood-width" placeholder="例如：10" min="1" max="200">
+            </div>
+            
+            <div class="input-group">
+                <label for="blood-thickness">浸血厚度 (cm)</label>
+                <select id="blood-thickness">
+                    <option value="0.5">薄层 (0.5cm)</option>
+                    <option value="1" selected>中等 (1.0cm)</option>
+                    <option value="1.5">较厚 (1.5cm)</option>
+                    <option value="2">很厚 (2.0cm)</option>
+                </select>
+            </div>
+            
+            <button class="btn" id="calculate-area">计算出血量</button>
+            
+            <div class="formula-box">
+                <strong>计算公式：</strong><br>
+                出血量(ml) = 长度(cm) × 宽度(cm) × 厚度(cm)<br>
+                (假设1cm³ ≈ 1ml)
+            </div>
+            
+            <div id="area-result" class="result-box">
+                <div class="result-title">计算结果</div>
+                <div class="result-value" id="area-value">0 ml</div>
+                <div class="result-details" id="area-details"></div>
+            </div>
+        </div>
+        
+        <!-- 称重法 -->
+        <div id="weight-method" class="calculation-section">
+            <h2 class="section-title">称重法</h2>
+            <p>通过敷料重量变化计算出血量（手术室常用）。</p>
+            
+            <h3>1. 含血敷料总重量 (g)</h3>
+            <div class="accumulator-display">
+                当前累计：<span class="accumulator-value" id="wet-total">0</span> g
+            </div>
+            
+            <div class="weight-input-container">
+                <div class="input-group">
+                    <label for="wet-input">输入单次重量</label>
+                    <div class="input-unit">
+                        <input type="number" id="wet-input" placeholder="输入重量后点击结算" min="0" max="10000" step="1">
+                        <span class="unit">g</span>
+                    </div>
+                </div>
+                
+                <div class="weight-controls">
+                    <button class="btn btn-small" id="wet-add">结算</button>
+                    <button class="btn btn-small btn-secondary" id="wet-undo">撤回</button>
+                    <button class="btn btn-small" id="wet-reset">重置</button>
+                </div>
+            </div>
+            
+            <div class="history-list" id="wet-history">
+                <!-- 历史记录将动态添加到这里 -->
+                <div style="text-align: center; color: #999; padding: 20px;">暂无记录</div>
+            </div>
+            
+            <h3>2. 干敷料原重量 (g)</h3>
+            <div class="dry-material-selector">
+                <div class="material-item">
+                    <div class="material-info">
+                        <div class="material-name">大纱垫 (25cm×25cm)</div>
+                        <div class="material-weight">单位重量：20g</div>
+                    </div>
+                    <div class="material-controls">
+                        <div class="quantity-input-container">
+                            <button class="btn btn-small" onclick="changeDryMaterialQuantity('pad', -1)">-</button>
+                            <input type="number" class="material-quantity" id="pad-qty" value="0" min="0" onchange="updateDryMaterialQuantity('pad', this.value)">
+                            <button class="btn btn-small" onclick="changeDryMaterialQuantity('pad', 1)">+</button>
+                        </div>
+                        <div class="material-total" id="pad-total">0g</div>
+                    </div>
+                </div>
+                
+                <div class="material-item">
+                    <div class="material-info">
+                        <div class="material-name">垫巾 (80cm×80cm)</div>
+                        <div class="material-weight">单位重量：80g</div>
+                    </div>
+                    <div class="material-controls">
+                        <div class="quantity-input-container">
+                            <button class="btn btn-small" onclick="changeDryMaterialQuantity('towel', -1)">-</button>
+                            <input type="number" class="material-quantity" id="towel-qty" value="0" min="0" onchange="updateDryMaterialQuantity('towel', this.value)">
+                            <button class="btn btn-small" onclick="changeDryMaterialQuantity('towel', 1)">+</button>
+                        </div>
+                        <div class="material-total" id="towel-total">0g</div>
+                    </div>
+                </div>
+                
+                <div class="material-item">
+                    <div class="material-info">
+                        <div class="material-name">接产垫 (100cm×150cm)</div>
+                        <div class="material-weight">单位重量：220g</div>
+                    </div>
+                    <div class="material-controls">
+                        <div class="quantity-input-container">
+                            <button class="btn btn-small" onclick="changeDryMaterialQuantity('mat', -1)">-</button>
+                            <input type="number" class="material-quantity" id="mat-qty" value="0" min="0" onchange="updateDryMaterialQuantity('mat', this.value)">
+                            <button class="btn btn-small" onclick="changeDryMaterialQuantity('mat', 1)">+</button>
+                        </div>
+                        <div class="material-total" id="mat-total">0g</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="weight-summary">
+                <h4>干敷料总重量</h4>
+                <p id="dry-summary">大纱垫：0块 × 20g = 0g<br>垫巾：0块 × 80g = 0g<br>接产垫：0块 × 220g = 0g</p>
+                <p><strong>合计：<span id="dry-total">0</span> g</strong></p>
+                <div class="weight-controls">
+                    <button class="btn btn-small" id="dry-clear">清除</button>
+                    <button class="btn btn-small" id="dry-reset">重置</button>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="amniotic-fluid">羊水量 (ml)</label>
+                <div class="input-unit">
+                    <input type="number" id="amniotic-fluid" placeholder="例如：200" min="0" max="5000">
+                    <span class="unit">ml</span>
+                </div>
+                <small>如果敷料混有羊水，需要减去</small>
+            </div>
+            
+            <button class="btn" id="calculate-weight">计算出血量</button>
+            
+            <div class="formula-box">
+                <strong>计算公式：</strong><br>
+                出血量(ml) = [含血敷料重量(g) - 干敷料重量(g)] / 1.05<br>
+                (血液比重取1.05 g/ml)<br>
+                如果混有羊水：出血量 = (上述结果 - 羊水量)
+            </div>
+            
+            <div id="weight-result" class="result-box">
+                <div class="result-title">计算结果</div>
+                <div class="result-value" id="weight-value">0 ml</div>
+                <div class="result-details" id="weight-details"></div>
+            </div>
+        </div>
+        
+        <!-- 容积法 -->
+        <div id="volume-method" class="calculation-section">
+            <h2 class="section-title">容积法</h2>
+            <p>通过吸引瓶液体总量减去原有水量计算出血量。</p>
+            
+            <div class="volume-options">
+                <div class="volume-option">
+                    <input type="radio" id="option-attractor" name="volume-method" value="attractor" checked>
+                    <label for="option-attractor">
+                        <div class="volume-option-name">吸引瓶法</div>
+                        <div class="volume-option-desc">测量吸引瓶总液量</div>
+                    </label>
+                </div>
+                
+                <div class="volume-option">
+                    <input type="radio" id="option-basin" name="volume-method" value="basin">
+                    <label for="option-basin">
+                        <div class="volume-option-name">弯盘法</div>
+                        <div class="volume-option-desc">大弯盘 ≈ 400ml/个</div>
+                    </label>
+                </div>
+            </div>
+            
+            <div id="attractor-inputs">
+                <div class="input-group">
+                    <label for="total-liquid">吸引瓶总液量 (ml)</label>
+                    <div class="input-unit">
+                        <input type="number" id="total-liquid" placeholder="例如：800" min="0" max="5000">
+                        <span class="unit">ml</span>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="original-water">原有水量 (ml)</label>
+                    <div class="input-unit">
+                        <input type="number" id="original-water" placeholder="例如：300" min="0" max="5000">
+                        <span class="unit">ml</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="basin-inputs" style="display: none;">
+                <div class="input-group">
+                    <label for="basin-count">大弯盘数量 (个)</label>
+                    <input type="number" id="basin-count" placeholder="例如：2" min="0" max="20">
+                </div>
+                
+                <div class="input-group">
+                    <label for="basin-percentage">满盘程度 (%)</label>
+                    <select id="basin-percentage">
+                        <option value="100" selected>完全充满 (100%)</option>
+                        <option value="90">接近充满 (90%)</option>
+                        <option value="75">3/4满 (75%)</option>
+                        <option value="50">半满 (50%)</option>
+                        <option value="25">1/4满 (25%)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn" id="calculate-volume">计算出血量</button>
+            
+            <div class="formula-box">
+                <strong>计算公式：</strong><br>
+                <strong>吸引瓶法：</strong> 出血量(ml) = 吸引瓶总液量(ml) - 原有水量(ml)<br>
+                <strong>弯盘法：</strong> 出血量(ml) = 弯盘数量 × 400ml × 满盘程度%
+            </div>
+            
+            <div id="volume-result" class="result-box">
+                <div class="result-title">计算结果</div>
+                <div class="result-value" id="volume-value">0 ml</div>
+                <div class="result-details" id="volume-details"></div>
+            </div>
+        </div>
+        
+        <!-- 血红蛋白法 -->
+        <div id="hb-method" class="calculation-section">
+            <h2 class="section-title">血红蛋白/红细胞压积稀释法</h2>
+            <p>通过Hct或Hb变化估算出血量。</p>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="hb-gender">性别</label>
+                    <select id="hb-gender">
+                        <option value="female" selected>女性</option>
+                        <option value="male">男性</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="hb-weight">体重 (kg)</label>
+                    <div class="input-unit">
+                        <input type="number" id="hb-weight" placeholder="例如：60" min="30" max="200" step="0.1">
+                        <span class="unit">kg</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label>测量指标</label>
+                <select id="measure-type">
+                    <option value="hb" selected>血红蛋白 (Hb)</option>
+                    <option value="hct">红细胞压积 (Hct)</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="pre-value">术前/初始值</label>
+                <input type="number" id="pre-value" placeholder="例如：130 (Hb) 或 40 (Hct)" min="10" max="200">
+                <small>Hb单位：g/L，Hct单位：%</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="post-value">术后/当前值</label>
+                <input type="number" id="post-value" placeholder="例如：100 (Hb) 或 30 (Hct)" min="10" max="200">
+                <small>Hb单位：g/L，Hct单位：%</small>
+            </div>
+            
+            <button class="btn" id="calculate-hb">计算出血量</button>
+            
+            <div class="formula-box">
+                <strong>计算公式：</strong><br>
+                <strong>Hct法：</strong> 出血量 ≈ 全身血容量 × (术前Hct - 术后Hct) / 术前Hct<br>
+                <strong>Hb法：</strong> Hb每下降10g/L，失血量 ≈ 400-500ml (无血液浓缩或额外液体输注)<br>
+                <strong>全身血容量：</strong> 男性=体重(kg)×70ml/kg，女性=体重(kg)×65ml/kg
+            </div>
+            
+            <div id="hb-result" class="result-box">
+                <div class="result-title">计算结果</div>
+                <div class="result-value" id="hb-value">0 ml</div>
+                <div class="result-details" id="hb-details"></div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>出血量计算工具 | 仅供医学专业人士参考 | 版本 3.0</p>
+            <p>计算方法基于临床常规指南，实际应用需结合患者具体情况</p>
+        </footer>
+    </div>
+
+    <script>
+        // 方法选择器
+        document.querySelectorAll('.method-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 移除所有按钮的active类
+                document.querySelectorAll('.method-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                
+                // 为当前按钮添加active类
+                this.classList.add('active');
+                
+                // 隐藏所有计算部分
+                document.querySelectorAll('.calculation-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // 显示对应的计算部分
+                const method = this.getAttribute('data-method');
+                document.getElementById(`${method}-method`).classList.add('active');
+            });
+        });
+        
+        // 休克指数法计算
+        document.getElementById('calculate-shock').addEventListener('click', function() {
+            const gender = document.getElementById('shock-gender').value;
+            const weight = parseFloat(document.getElementById('shock-weight').value);
+            const heartRate = parseFloat(document.getElementById('heart-rate').value);
+            const systolicBP = parseFloat(document.getElementById('systolic-bp').value);
+            
+            if (!weight || !heartRate || !systolicBP) {
+                alert('请填写所有必要参数');
+                return;
+            }
+            
+            // 计算全身血容量
+            let bloodVolume = 0;
+            if (gender === 'male') {
+                bloodVolume = weight * 70; // 男性: 70ml/kg
+            } else {
+                bloodVolume = weight * 65; // 女性: 65ml/kg
+            }
+            
+            // 计算休克指数
+            const shockIndex = heartRate / systolicBP;
+            
+            // 估算出血量
+            let bloodLoss = 0;
+            let severity = "正常";
+            let percentage = 0;
+            
+            if (shockIndex <= 0.5) {
+                bloodLoss = 0;
+                severity = "正常范围 (休克指数 ≤ 0.5)";
+                percentage = 0;
+            } else if (shockIndex <= 1.0) {
+                // 失血量约为全身血容量的20-30%
+                percentage = 0.25; // 取中间值25%
+                bloodLoss = bloodVolume * percentage;
+                severity = "轻度休克 (失血量约20-30%，休克指数≈1.0)";
+            } else if (shockIndex <= 1.5) {
+                // 失血量约为全身血容量的30-50%
+                percentage = 0.4; // 取中间值40%
+                bloodLoss = bloodVolume * percentage;
+                severity = "中度休克 (失血量约30-50%，休克指数>1.0)";
+            } else {
+                // 失血量超过50%
+                percentage = 0.6; // 取60%
+                bloodLoss = bloodVolume * percentage;
+                severity = "重度休克 (失血量>50%，休克指数>1.5)";
+            }
+            
+            // 显示结果
+            document.getElementById('shock-value').textContent = `${Math.round(bloodLoss)} ml`;
+            document.getElementById('shock-details').innerHTML = `
+                <p><strong>全身血容量：</strong> ${Math.round(bloodVolume)} ml (${gender === 'male' ? '男性' : '女性'}, ${weight}kg)</p>
+                <p><strong>休克指数(SI)：</strong> ${shockIndex.toFixed(2)}</p>
+                <p><strong>休克程度：</strong> ${severity}</p>
+                <p><strong>占全身血容量：</strong> ${Math.round(percentage * 100)}%</p>
+            `;
+            
+            document.getElementById('shock-result').classList.add('show');
+        });
+        
+        // 纱布估算法计算
+        document.getElementById('calculate-gauze').addEventListener('click', function() {
+            const largeGauze = parseInt(document.getElementById('large-gauze').value) || 0;
+            const largePad = parseInt(document.getElementById('large-pad').value) || 0;
+            const smallGauze = parseInt(document.getElementById('small-gauze').value) || 0;
+            
+            // 计算出血量
+            const bloodLoss = (largeGauze * 15) + (largePad * 40) + (smallGauze * 5);
+            
+            // 显示结果
+            document.getElementById('gauze-value').textContent = `${bloodLoss} ml`;
+            
+            let details = `<p><strong>大纱布：</strong> ${largeGauze} 块 × 15ml = ${largeGauze * 15}ml</p>`;
+            details += `<p><strong>大棉垫：</strong> ${largePad} 块 × 40ml = ${largePad * 40}ml</p>`;
+            details += `<p><strong>小纱布：</strong> ${smallGauze} 块 × 5ml = ${smallGauze * 5}ml</p>`;
+            
+            if (bloodLoss > 1000) {
+                details += `<p><strong>提示：</strong> 失血量超过1000ml，需警惕休克风险</p>`;
+            }
+            
+            document.getElementById('gauze-details').innerHTML = details;
+            document.getElementById('gauze-result').classList.add('show');
+        });
+        
+        // 面积法计算
+        document.getElementById('calculate-area').addEventListener('click', function() {
+            const length = parseFloat(document.getElementById('blood-length').value);
+            const width = parseFloat(document.getElementById('blood-width').value);
+            const thickness = parseFloat(document.getElementById('blood-thickness').value);
+            
+            if (!length || !width) {
+                alert('请填写浸血区域的长和宽');
+                return;
+            }
+            
+            // 计算出血量
+            const bloodLoss = length * width * thickness;
+            
+            // 显示结果
+            document.getElementById('area-value').textContent = `${Math.round(bloodLoss)} ml`;
+            
+            let thicknessText = "中等厚度";
+            if (thickness === 0.5) thicknessText = "薄层";
+            else if (thickness === 1.5) thicknessText = "较厚";
+            else if (thickness === 2) thicknessText = "很厚";
+            
+            document.getElementById('area-details').innerHTML = `
+                <p><strong>浸血面积：</strong> ${length}cm × ${width}cm = ${length*width}cm²</p>
+                <p><strong>浸血厚度：</strong> ${thickness}cm (${thicknessText})</p>
+                <p><strong>估算公式：</strong> 面积 × 厚度 = ${length} × ${width} × ${thickness}</p>
+            `;
+            
+            document.getElementById('area-result').classList.add('show');
+        });
+        
+        // 称重法 - 湿敷料累加功能
+        let wetWeightHistory = [];
+        let wetWeightTotal = 0;
+        
+        function updateWetWeightDisplay() {
+            document.getElementById('wet-total').textContent = wetWeightTotal;
+            
+            const historyContainer = document.getElementById('wet-history');
+            
+            if (wetWeightHistory.length === 0) {
+                historyContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无记录</div>';
+                return;
+            }
+            
+            let historyHTML = '';
+            wetWeightHistory.forEach((item, index) => {
+                historyHTML += `
+                    <div class="history-item">
+                        <span>记录 ${index + 1}: ${item} g</span>
+                        <span>小计: ${wetWeightHistory.slice(0, index + 1).reduce((a, b) => a + b, 0)} g</span>
+                    </div>
+                `;
+            });
+            
+            historyContainer.innerHTML = historyHTML;
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+        
+        document.getElementById('wet-add').addEventListener('click', function() {
+            const inputValue = parseFloat(document.getElementById('wet-input').value);
+            
+            if (!inputValue || inputValue <= 0) {
+                alert('请输入有效的重量值');
+                return;
+            }
+            
+            wetWeightHistory.push(inputValue);
+            wetWeightTotal += inputValue;
+            
+            document.getElementById('wet-input').value = '';
+            updateWetWeightDisplay();
+        });
+        
+        document.getElementById('wet-undo').addEventListener('click', function() {
+            if (wetWeightHistory.length === 0) {
+                alert('没有可撤回的记录');
+                return;
+            }
+            
+            const lastValue = wetWeightHistory.pop();
+            wetWeightTotal -= lastValue;
+            updateWetWeightDisplay();
+        });
+        
+        document.getElementById('wet-reset').addEventListener('click', function() {
+            if (wetWeightHistory.length === 0) {
+                return;
+            }
+            
+            if (confirm('确定要重置所有湿敷料重量记录吗？')) {
+                wetWeightHistory = [];
+                wetWeightTotal = 0;
+                updateWetWeightDisplay();
+            }
+        });
+        
+        // 称重法 - 干敷料选择功能
+        let dryMaterials = {
+            pad: { name: '大纱垫', weight: 20, quantity: 0 },
+            towel: { name: '垫巾', weight: 80, quantity: 0 },
+            mat: { name: '接产垫', weight: 220, quantity: 0 }
+        };
+        
+        function changeDryMaterialQuantity(type, change) {
+            const newQuantity = dryMaterials[type].quantity + change;
+            
+            if (newQuantity < 0) return;
+            
+            dryMaterials[type].quantity = newQuantity;
+            updateDryMaterialDisplay();
+        }
+        
+        function updateDryMaterialQuantity(type, value) {
+            const newQuantity = parseInt(value) || 0;
+            
+            if (newQuantity < 0) return;
+            
+            dryMaterials[type].quantity = newQuantity;
+            updateDryMaterialDisplay();
+        }
+        
+        function updateDryMaterialDisplay() {
+            // 更新数量显示
+            document.getElementById('pad-qty').value = dryMaterials.pad.quantity;
+            document.getElementById('towel-qty').value = dryMaterials.towel.quantity;
+            document.getElementById('mat-qty').value = dryMaterials.mat.quantity;
+            
+            // 更新小计
+            document.getElementById('pad-total').textContent = `${dryMaterials.pad.quantity * dryMaterials.pad.weight}g`;
+            document.getElementById('towel-total').textContent = `${dryMaterials.towel.quantity * dryMaterials.towel.weight}g`;
+            document.getElementById('mat-total').textContent = `${dryMaterials.mat.quantity * dryMaterials.mat.weight}g`;
+            
+            // 更新摘要
+            const padTotal = dryMaterials.pad.quantity * dryMaterials.pad.weight;
+            const towelTotal = dryMaterials.towel.quantity * dryMaterials.towel.weight;
+            const matTotal = dryMaterials.mat.quantity * dryMaterials.mat.weight;
+            const total = padTotal + towelTotal + matTotal;
+            
+            document.getElementById('dry-summary').innerHTML = `
+                大纱垫：${dryMaterials.pad.quantity}块 × 20g = ${padTotal}g<br>
+                垫巾：${dryMaterials.towel.quantity}块 × 80g = ${towelTotal}g<br>
+                接产垫：${dryMaterials.mat.quantity}块 × 220g = ${matTotal}g
+            `;
+            
+            document.getElementById('dry-total').textContent = total;
+        }
+        
+        document.getElementById('dry-clear').addEventListener('click', function() {
+            if (confirm('确定要清除所有干敷料数量吗？')) {
+                dryMaterials.pad.quantity = 0;
+                dryMaterials.towel.quantity = 0;
+                dryMaterials.mat.quantity = 0;
+                updateDryMaterialDisplay();
+            }
+        });
+        
+        document.getElementById('dry-reset').addEventListener('click', function() {
+            if (confirm('确定要重置所有干敷料设置吗？')) {
+                dryMaterials = {
+                    pad: { name: '大纱垫', weight: 20, quantity: 0 },
+                    towel: { name: '垫巾', weight: 80, quantity: 0 },
+                    mat: { name: '接产垫', weight: 220, quantity: 0 }
+                };
+                updateDryMaterialDisplay();
+            }
+        });
+        
+        // 称重法计算
+        document.getElementById('calculate-weight').addEventListener('click', function() {
+            // 湿敷料总重量
+            const wetWeight = wetWeightTotal;
+            
+            // 干敷料总重量
+            const dryWeight = parseInt(document.getElementById('dry-total').textContent);
+            
+            // 羊水量
+            const amnioticFluid = parseFloat(document.getElementById('amniotic-fluid').value) || 0;
+            
+            if (wetWeight <= 0) {
+                alert('请先输入含血敷料重量');
+                return;
+            }
+            
+            if (wetWeight <= dryWeight) {
+                alert('含血敷料重量必须大于干敷料重量');
+                return;
+            }
+            
+            // 计算出血量
+            let bloodLoss = (wetWeight - dryWeight) / 1.05;
+            
+            // 减去羊水
+            if (amnioticFluid > 0) {
+                bloodLoss = Math.max(0, bloodLoss - amnioticFluid);
+            }
+            
+            // 显示结果
+            document.getElementById('weight-value').textContent = `${Math.round(bloodLoss)} ml`;
+            
+            let details = `<p><strong>含血敷料总重量：</strong> ${wetWeight}g (${wetWeightHistory.length}次记录)</p>`;
+            details += `<p><strong>干敷料原重量：</strong> ${dryWeight}g</p>`;
+            details += `<p><strong>重量差：</strong> ${wetWeight}g - ${dryWeight}g = ${wetWeight - dryWeight}g</p>`;
+            details += `<p><strong>除以血液比重(1.05)：</strong> ${(wetWeight - dryWeight).toFixed(1)}g ÷ 1.05 ≈ ${((wetWeight - dryWeight)/1.05).toFixed(0)}ml</p>`;
+            
+            if (amnioticFluid > 0) {
+                details += `<p><strong>减去羊水量：</strong> ${((wetWeight - dryWeight)/1.05).toFixed(0)}ml - ${amnioticFluid}ml = ${bloodLoss.toFixed(0)}ml</p>`;
+            }
+            
+            document.getElementById('weight-details').innerHTML = details;
+            document.getElementById('weight-result').classList.add('show');
+        });
+        
+        // 容积法 - 方法选择切换
+        const volumeMethodRadios = document.querySelectorAll('input[name="volume-method"]');
+        const attractorInputs = document.getElementById('attractor-inputs');
+        const basinInputs = document.getElementById('basin-inputs');
+        
+        volumeMethodRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'attractor') {
+                    attractorInputs.style.display = 'block';
+                    basinInputs.style.display = 'none';
+                } else {
+                    attractorInputs.style.display = 'none';
+                    basinInputs.style.display = 'block';
+                }
+            });
+        });
+        
+        // 容积法计算
+        document.getElementById('calculate-volume').addEventListener('click', function() {
+            const method = document.querySelector('input[name="volume-method"]:checked').value;
+            let bloodLoss = 0;
+            let details = '';
+            
+            if (method === 'attractor') {
+                const totalLiquid = parseFloat(document.getElementById('total-liquid').value);
+                const originalWater = parseFloat(document.getElementById('original-water').value) || 0;
+                
+                if (!totalLiquid) {
+                    alert('请填写吸引瓶总液量');
+                    return;
+                }
+                
+                if (totalLiquid < originalWater) {
+                    alert('吸引瓶总液量不能小于原有水量');
+                    return;
+                }
+                
+                // 计算出血量
+                bloodLoss = totalLiquid - originalWater;
+                
+                details = `<p><strong>吸引瓶总液量：</strong> ${totalLiquid}ml</p>`;
+                details += `<p><strong>原有水量：</strong> ${originalWater}ml</p>`;
+                details += `<p><strong>计算公式：</strong> ${totalLiquid}ml - ${originalWater}ml = ${bloodLoss}ml</p>`;
+                
+                if (originalWater === 0) {
+                    details += `<p><strong>注意：</strong> 如果吸引瓶中混有原有水，请务必填写原有水量</p>`;
+                }
+            } else {
+                const basinCount = parseInt(document.getElementById('basin-count').value) || 0;
+                const basinPercentage = parseInt(document.getElementById('basin-percentage').value) / 100;
+                
+                if (!basinCount || basinCount <= 0) {
+                    alert('请填写大弯盘数量');
+                    return;
+                }
+                
+                // 计算出血量
+                bloodLoss = basinCount * 400 * basinPercentage;
+                
+                const percentageText = document.getElementById('basin-percentage').selectedOptions[0].text;
+                
+                details = `<p><strong>大弯盘数量：</strong> ${basinCount}个</p>`;
+                details += `<p><strong>满盘程度：</strong> ${percentageText}</p>`;
+                details += `<p><strong>计算公式：</strong> ${basinCount}个 × 400ml × ${basinPercentage} = ${bloodLoss}ml</p>`;
+                details += `<p><strong>提示：</strong> 每个大弯盘容量约400ml</p>`;
+            }
+            
+            // 显示结果
+            document.getElementById('volume-value').textContent = `${Math.round(bloodLoss)} ml`;
+            document.getElementById('volume-details').innerHTML = details;
+            document.getElementById('volume-result').classList.add('show');
+        });
+        
+        // 血红蛋白法计算
+        document.getElementById('calculate-hb').addEventListener('click', function() {
+            const gender = document.getElementById('hb-gender').value;
+            const weight = parseFloat(document.getElementById('hb-weight').value);
+            const preValue = parseFloat(document.getElementById('pre-value').value);
+            const postValue = parseFloat(document.getElementById('post-value').value);
+            const measureType = document.getElementById('measure-type').value;
+            
+            if (!weight || !preValue || !postValue) {
+                alert('请填写所有必要参数');
+                return;
+            }
+            
+            if (preValue <= postValue) {
+                alert('术前/初始值应大于术后/当前值');
+                return;
+            }
+            
+            // 计算全身血容量
+            let bloodVolume = 0;
+            if (gender === 'male') {
+                bloodVolume = weight * 70; // 男性: 70ml/kg
+            } else {
+                bloodVolume = weight * 65; // 女性: 65ml/kg
+            }
+            
+            let bloodLoss = 0;
+            let details = `<p><strong>全身血容量：</strong> ${Math.round(bloodVolume)} ml (${gender === 'male' ? '男性' : '女性'}, ${weight}kg)</p>`;
+            
+            if (measureType === 'hct') {
+                // Hct法
+                bloodLoss = bloodVolume * (preValue - postValue) / preValue;
+                details += `<p><strong>术前Hct：</strong> ${preValue}%</p>`;
+                details += `<p><strong>术后Hct：</strong> ${postValue}%</p>`;
+                details += `<p><strong>计算公式：</strong> ${Math.round(bloodVolume)}ml × (${preValue} - ${postValue}) ÷ ${preValue}</p>`;
+                details += `<p><strong>Hct下降：</strong> ${preValue - postValue}% (${((preValue - postValue)/preValue*100).toFixed(1)}%)</p>`;
+            } else {
+                // Hb法 (简易判断：每下降10g/L ≈ 400-500ml)
+                const hbDrop = preValue - postValue;
+                bloodLoss = (hbDrop / 10) * 450; // 取中间值450ml
+                details += `<p><strong>术前Hb：</strong> ${preValue}g/L</p>`;
+                details += `<p><strong>术后Hb：</strong> ${postValue}g/L</p>`;
+                details += `<p><strong>Hb下降：</strong> ${hbDrop}g/L</p>`;
+                details += `<p><strong>估算方法：</strong> Hb每下降10g/L ≈ 400-500ml，取中间值450ml</p>`;
+                details += `<p><strong>计算公式：</strong> (${hbDrop}g/L ÷ 10) × 450ml = ${bloodLoss.toFixed(0)}ml</p>`;
+            }
+            
+            // 显示结果
+            document.getElementById('hb-value').textContent = `${Math.round(bloodLoss)} ml`;
+            
+            // 添加临床意义
+            const percentage = (bloodLoss / bloodVolume) * 100;
+            let clinicalNote = "";
+            
+            if (percentage < 15) {
+                clinicalNote = "失血量<15%，轻度失血";
+            } else if (percentage < 30) {
+                clinicalNote = "失血量15-30%，中度失血，可能出现休克早期表现";
+            } else if (percentage < 40) {
+                clinicalNote = "失血量30-40%，重度失血，休克风险高";
+            } else {
+                clinicalNote = "失血量>40%，极重度失血，危及生命";
+            }
+            
+            details += `<p><strong>临床意义：</strong> ${clinicalNote} (占血容量${percentage.toFixed(1)}%)</p>`;
+            
+            document.getElementById('hb-details').innerHTML = details;
+            document.getElementById('hb-result').classList.add('show');
+        });
+        
+        // 初始化：为所有输入框添加示例值（方便测试）
+        function initializeExamples() {
+            // 休克指数法
+            document.getElementById('shock-gender').value = 'female';
+            document.getElementById('shock-weight').value = '60';
+            document.getElementById('heart-rate').value = '120';
+            document.getElementById('systolic-bp').value = '90';
+            
+            // 纱布估算法
+            document.getElementById('large-gauze').value = '5';
+            document.getElementById('large-pad').value = '3';
+            document.getElementById('small-gauze').value = '10';
+            
+            // 面积法
+            document.getElementById('blood-length').value = '15';
+            document.getElementById('blood-width').value = '10';
+            
+            // 称重法
+            document.getElementById('amniotic-fluid').value = '200';
+            
+            // 容积法
+            document.getElementById('total-liquid').value = '800';
+            document.getElementById('original-water').value = '300';
+            document.getElementById('basin-count').value = '2';
+            
+            // 血红蛋白法
+            document.getElementById('hb-gender').value = 'female';
+            document.getElementById('hb-weight').value = '60';
+            document.getElementById('pre-value').value = '130';
+            document.getElementById('post-value').value = '100';
+            document.getElementById('measure-type').value = 'hb';
+            
+            // 弯盘法默认值设为100%
+            document.getElementById('basin-percentage').value = '100';
+            
+            // 更新干敷料显示
+            updateDryMaterialDisplay();
+        }
+        
+        // 页面加载时初始化示例值
+        window.addEventListener('DOMContentLoaded', initializeExamples);
+    </script>
+</body>
+</html>
